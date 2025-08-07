@@ -1,0 +1,7 @@
+tenants:
+  - name: tenantA
+    watch_dir: "/tmp/tenantA/incoming"
+    dest_dir: "/tmp/tenantA/outgoing"
+  - name: tenantB
+    watch_dir: "/tmp/tenantB/incoming"
+    dest_dir: "/tmp/tenantB/outgoing"
