@@ -8,7 +8,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
+	"os/user"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -389,6 +391,7 @@ func watchTenant(ctx context.Context, tc TenantConfig, db *sql.DB, wg *sync.Wait
 }
 
 func main() {
+	installServiceFlag := flag.Bool("install-service", false, "Instala o serviço systemd para inicialização automática")
 	listFlag := flag.Bool("list-processed", false, "List processed files from the database and exit")
 	tenantFlag := flag.String("tenant", "", "Filter processed files by tenant name (use with --list-processed)")
 	keepSourceFlag := flag.Bool("keep-source", false, "Keep the source file after copying (do not delete original)")
@@ -399,6 +402,50 @@ func main() {
 	pageSizeFlag := flag.Int("page-size", 20, "Number of records per page (default 20)")
 
 	flag.Parse()
+
+	if *installServiceFlag {
+		exePath, err := os.Executable()
+		if err != nil {
+			log.Fatalf("Erro ao obter path do binário: %v", err)
+		}
+		workDir, err := os.Getwd()
+		if err != nil {
+			log.Fatalf("Erro ao obter diretório de trabalho: %v", err)
+		}
+		currentUser, err := user.Current()
+		if err != nil {
+			log.Fatalf("Erro ao obter usuário: %v", err)
+		}
+		serviceContent := fmt.Sprintf(`[Unit]
+Description=GFW Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%s
+WorkingDirectory=%s
+Restart=on-failure
+User=%s
+
+[Install]
+WantedBy=multi-user.target
+`, exePath, workDir, currentUser.Username)
+		tmpService := "gfw.service"
+		if err := os.WriteFile(tmpService, []byte(serviceContent), 0644); err != nil {
+			log.Fatalf("Erro ao criar arquivo de serviço temporário: %v", err)
+		}
+		defer os.Remove(tmpService)
+		cmdCopy := exec.Command("sudo", "cp", tmpService, "/etc/systemd/system/gfw.service")
+		cmdCopy.Stdout = os.Stdout
+		cmdCopy.Stderr = os.Stderr
+		if err := cmdCopy.Run(); err != nil {
+			log.Fatalf("Erro ao copiar serviço para /etc/systemd/system: %v", err)
+		}
+		exec.Command("sudo", "systemctl", "daemon-reload").Run()
+		exec.Command("sudo", "systemctl", "enable", "--now", "gfw.service").Run()
+		fmt.Println("Serviço systemd instalado e iniciado com sucesso!")
+		return
+	}
 
 	db, err := initDB()
 	if err != nil {

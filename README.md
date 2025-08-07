@@ -52,6 +52,23 @@ Cada tenant possui:
 
 ## Uso e Execução
 
+### Instalação automática como serviço systemd
+
+Para instalar e iniciar o gfw como serviço no Linux (Ubuntu/Debian/EC2), execute:
+
+```sh
+sudo ./gfw --install-service
+```
+
+O programa irá:
+
+- Detectar o caminho do binário e diretório atual automaticamente
+- Gerar o arquivo de serviço systemd com o path correto
+- Copiar para `/etc/systemd/system/go-filewatcher.service`
+- Executar `systemctl daemon-reload` e `systemctl enable --now go-filewatcher.service`
+
+Após isso, o serviço será iniciado automaticamente no boot.
+
 ### Execução padrão
 
 ```sh
