@@ -128,4 +128,4 @@ go run main.go --delete-processed 4,5 --tenant tenantB
 
 ## Autor
 
-- Thiago Zilli Sarmento(github.com/thiagozs)
+2025, Desenvolvido por [Thiago Zilli Sarmento](https://github.com/thiagozs) ❤️

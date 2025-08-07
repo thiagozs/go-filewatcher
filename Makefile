@@ -1,6 +1,6 @@
 # Makefile para o projeto go-filewatcher
 
-APP_NAME=go-filewatcher
+APP_NAME=gfw
 BIN_DIR=bin
 BIN=$(BIN_DIR)/$(APP_NAME)
 
