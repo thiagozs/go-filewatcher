@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"testing"
 	"path/filepath"
+	"testing"
 )
 
 func TestMultiTenants(t *testing.T) {

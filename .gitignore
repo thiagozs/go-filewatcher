@@ -2,4 +2,5 @@
 .env
 config.yaml
 filewatcher.db
-bin/go-filewatcher
+bin/*
+!bin/.gitkeep

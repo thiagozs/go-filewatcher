@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
-	"context"
-	"sync"
 )
 
 func TestWatcher_BasicFlow(t *testing.T) {
