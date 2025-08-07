@@ -25,12 +25,12 @@ A configuração é feita via arquivo `config.yaml` (exemplo em `config.example.
 
 ```yaml
 tenants:
-	- name: tenantA
-		watch_dir: "/tmp/tenantA/incoming"
-		dest_dir: "/tmp/tenantA/outgoing"
-	- name: tenantB
-		watch_dir: "/tmp/tenantB/incoming"
-		dest_dir: "/tmp/tenantB/outgoing"
+    - name: tenantA
+        watch_dir: "/tmp/tenantA/incoming"
+        dest_dir: "/tmp/tenantA/outgoing"
+    - name: tenantB
+        watch_dir: "/tmp/tenantB/incoming"
+        dest_dir: "/tmp/tenantB/outgoing"
 ```
 
 Cada tenant possui:
@@ -55,7 +55,7 @@ Cada tenant possui:
 ### Execução padrão
 
 ```sh
-go run main.go
+./gfw
 ```
 
 ---
@@ -66,7 +66,7 @@ O projeto possui um Makefile para facilitar a compilação e execução:
 
 | Comando         | Descrição                                 |
 |-----------------|-------------------------------------------|
-| make build      | Compila o binário em `bin/go-filewatcher` |
+| make build      | Compila o binário em `bin/gfw` |
 | make run        | Compila e executa o binário               |
 | make clean      | Remove a pasta `bin/` e o binário gerado  |
 
@@ -91,19 +91,19 @@ make clean
 Exemplo de listagem:
 
 ```sh
-go run main.go --list-processed --tenant tenantA --page 1 --page-size 10
+./gfw --list-processed --tenant tenantA --page 1 --page-size 10
 ```
 
 Exemplo de recópia:
 
 ```sh
-go run main.go --recopy 1,2,3 --tenant tenantA
+./gfw --recopy 1,2,3 --tenant tenantA
 ```
 
 Exemplo de exclusão:
 
 ```sh
-go run main.go --delete-processed 4,5 --tenant tenantB
+./gfw --delete-processed 4,5 --tenant tenantB
 ```
 
 ---
