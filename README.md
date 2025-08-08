@@ -8,6 +8,7 @@ O **go-filewatcher** é uma aplicação escrita em Go para monitoramento de dire
 
 ## Funcionalidades Principais
 
+- **Sincronização automática na inicialização**: Ao iniciar, o sistema garante que todos os arquivos presentes nos diretórios monitorados e de destino estejam registrados no banco de dados. Se houver arquivos presentes em disco e não registrados, eles são copiados/sincronizados e o banco é atualizado automaticamente.
 - **Monitoramento de Diretórios**: Observa diretórios configurados para cada tenant e detecta novos arquivos criados.
 - **Cópia Automática**: Ao detectar um novo arquivo, realiza a cópia para o diretório de destino correspondente ao tenant.
 - **Controle de Processamento**: Registra no banco de dados os arquivos já processados, evitando duplicidade.

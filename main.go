@@ -390,7 +390,68 @@ func watchTenant(ctx context.Context, tc TenantConfig, db *sql.DB, wg *sync.Wait
 	}
 }
 
+func fileExists(path string) bool {
+	fi, err := os.Stat(path)
+	return err == nil && !fi.IsDir()
+}
+
+// Sincroniza arquivos entre diretórios e banco ao iniciar
+func syncTenantDirs(db *sql.DB, tc TenantConfig) error {
+	watchFiles, _ := os.ReadDir(tc.WatchDir)
+	destFiles, _ := os.ReadDir(tc.DestDir)
+	filesSet := make(map[string]struct{})
+	// Indexa todos os arquivos dos dois diretórios
+	for _, f := range watchFiles {
+		if !f.IsDir() {
+			filesSet[f.Name()] = struct{}{}
+		}
+	}
+	for _, f := range destFiles {
+		if !f.IsDir() {
+			filesSet[f.Name()] = struct{}{}
+		}
+	}
+	for fname := range filesSet {
+		srcPath := filepath.Join(tc.WatchDir, fname)
+		dstPath := filepath.Join(tc.DestDir, fname)
+		srcExists := fileExists(srcPath)
+		dstExists := fileExists(dstPath)
+		// Se não está no banco, processa
+		processed, _ := hasProcessed(db, tc.Name, srcPath)
+		if !processed {
+			// Se só existe no destino, registra no banco
+			if !srcExists && dstExists {
+				fi, _ := os.Stat(dstPath)
+				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
+			}
+			// Se só existe no watch, copia e registra
+			if srcExists && !dstExists {
+				copyFile(srcPath, dstPath)
+				fi, _ := os.Stat(srcPath)
+				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
+			}
+			// Se existe nos dois, só registra
+			if srcExists && dstExists {
+				fi, _ := os.Stat(srcPath)
+				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
+			}
+		}
+	}
+	return nil
+}
+
 func main() {
+
+
+
+
+	var cfg *Config
+	var err error
+	cfg, err = loadConfig("config.yaml")
+	if err != nil {
+		log.Fatalf("Failed to load config: %v", err)
+	}
+
 	installServiceFlag := flag.Bool("install-service", false, "Instala o serviço systemd para inicialização automática")
 	listFlag := flag.Bool("list-processed", false, "List processed files from the database and exit")
 	tenantFlag := flag.String("tenant", "", "Filter processed files by tenant name (use with --list-processed)")
@@ -444,6 +505,7 @@ WantedBy=multi-user.target
 		exec.Command("sudo", "systemctl", "daemon-reload").Run()
 		exec.Command("sudo", "systemctl", "enable", "--now", "gfw.service").Run()
 		fmt.Println("Serviço systemd instalado e iniciado com sucesso!")
+
 		return
 	}
 
@@ -452,6 +514,13 @@ WantedBy=multi-user.target
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	defer db.Close()
+
+		// Sincroniza arquivos antes de iniciar watchers
+		for _, tenant := range cfg.Tenants {
+			if err := syncTenantDirs(db, tenant); err != nil {
+				log.Printf("[Sync] Erro ao sincronizar tenant %s: %v", tenant.Name, err)
+			}
+		}
 
 	if *deleteProcessedFlag != "" {
 		ids, err := parseIDs(*deleteProcessedFlag)
@@ -482,10 +551,6 @@ WantedBy=multi-user.target
 		return
 	}
 
-	cfg, err := loadConfig("config.yaml")
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
 
 	// Graceful shutdown: Context + signal handling
 	ctx, cancel := context.WithCancel(context.Background())
