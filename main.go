@@ -442,9 +442,6 @@ func syncTenantDirs(db *sql.DB, tc TenantConfig) error {
 
 func main() {
 
-
-
-
 	var cfg *Config
 	var err error
 	cfg, err = loadConfig("config.yaml")
@@ -515,12 +512,12 @@ WantedBy=multi-user.target
 	}
 	defer db.Close()
 
-		// Sincroniza arquivos antes de iniciar watchers
-		for _, tenant := range cfg.Tenants {
-			if err := syncTenantDirs(db, tenant); err != nil {
-				log.Printf("[Sync] Erro ao sincronizar tenant %s: %v", tenant.Name, err)
-			}
+	// Sincroniza arquivos antes de iniciar watchers
+	for _, tenant := range cfg.Tenants {
+		if err := syncTenantDirs(db, tenant); err != nil {
+			log.Printf("[Sync] Erro ao sincronizar tenant %s: %v", tenant.Name, err)
 		}
+	}
 
 	if *deleteProcessedFlag != "" {
 		ids, err := parseIDs(*deleteProcessedFlag)
@@ -550,7 +547,6 @@ WantedBy=multi-user.target
 		}
 		return
 	}
-
 
 	// Graceful shutdown: Context + signal handling
 	ctx, cancel := context.WithCancel(context.Background())
