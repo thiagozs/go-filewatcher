@@ -416,33 +416,33 @@ func syncTenantDirs(db *sql.DB, tc TenantConfig) error {
 		dstPath := filepath.Join(tc.DestDir, fname)
 		srcExists := fileExists(srcPath)
 		dstExists := fileExists(dstPath)
-		   // Se não está no banco, processa
-		   processed, _ := hasProcessed(db, tc.Name, srcPath)
-		   if !processed {
-			   // Se só existe no destino, registra no banco
-			   if !srcExists && dstExists {
-				   fi, _ := os.Stat(dstPath)
-				   markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
-				   log.Printf("[Sync] Only in dest: Registrando no banco arquivo '%s' para tenant '%s'", dstPath, tc.Name)
-			   }
-			   // Se só existe no watch, copia e registra
-			   if srcExists && !dstExists {
-				   err := copyFile(srcPath, dstPath)
+		// Se não está no banco, processa
+		processed, _ := hasProcessed(db, tc.Name, srcPath)
+		if !processed {
+			// Se só existe no destino, registra no banco
+			if !srcExists && dstExists {
+				fi, _ := os.Stat(dstPath)
+				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
+				   log.Printf("[Sync] Only in dest: Registering file '%s' in database for tenant '%s'", dstPath, tc.Name)
+			}
+			// Se só existe no watch, copia e registra
+			if srcExists && !dstExists {
+				err := copyFile(srcPath, dstPath)
 				   if err != nil {
-					   log.Printf("[Sync] Erro ao copiar '%s' para '%s': %v", srcPath, dstPath, err)
+					   log.Printf("[Sync] Error copying '%s' to '%s': %v", srcPath, dstPath, err)
 				   } else {
-					   log.Printf("[Sync] Only in watch: Copiado '%s' para '%s' para tenant '%s'", srcPath, dstPath, tc.Name)
+					   log.Printf("[Sync] Only in watch: Copied '%s' to '%s' for tenant '%s'", srcPath, dstPath, tc.Name)
 				   }
-				   fi, _ := os.Stat(srcPath)
-				   markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
-			   }
-			   // Se existe nos dois, só registra
-			   if srcExists && dstExists {
-				   fi, _ := os.Stat(srcPath)
-				   markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
-				   log.Printf("[Sync] Em ambos: Registrando no banco arquivo '%s' para tenant '%s'", srcPath, tc.Name)
-			   }
-		   }
+				fi, _ := os.Stat(srcPath)
+				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
+			}
+			// Se existe nos dois, só registra
+			if srcExists && dstExists {
+				fi, _ := os.Stat(srcPath)
+				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
+				   log.Printf("[Sync] In both: Registering file '%s' in database for tenant '%s'", srcPath, tc.Name)
+			}
+		}
 	}
 	return nil
 }
@@ -521,9 +521,9 @@ WantedBy=multi-user.target
 
 	// Sincroniza arquivos antes de iniciar watchers
 	for _, tenant := range cfg.Tenants {
-		if err := syncTenantDirs(db, tenant); err != nil {
-			log.Printf("[Sync] Erro ao sincronizar tenant %s: %v", tenant.Name, err)
-		}
+		   if err := syncTenantDirs(db, tenant); err != nil {
+			   log.Printf("[Sync] Error syncing tenant %s: %v", tenant.Name, err)
+		   }
 	}
 
 	if *deleteProcessedFlag != "" {
