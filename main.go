@@ -423,16 +423,16 @@ func syncTenantDirs(db *sql.DB, tc TenantConfig) error {
 			if !srcExists && dstExists {
 				fi, _ := os.Stat(dstPath)
 				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
-				   log.Printf("[Sync] Only in dest: Registering file '%s' in database for tenant '%s'", dstPath, tc.Name)
+				log.Printf("[Sync] Only in dest: Registering file '%s' in database for tenant '%s'", dstPath, tc.Name)
 			}
 			// Se só existe no watch, copia e registra
 			if srcExists && !dstExists {
 				err := copyFile(srcPath, dstPath)
-				   if err != nil {
-					   log.Printf("[Sync] Error copying '%s' to '%s': %v", srcPath, dstPath, err)
-				   } else {
-					   log.Printf("[Sync] Only in watch: Copied '%s' to '%s' for tenant '%s'", srcPath, dstPath, tc.Name)
-				   }
+				if err != nil {
+					log.Printf("[Sync] Error copying '%s' to '%s': %v", srcPath, dstPath, err)
+				} else {
+					log.Printf("[Sync] Only in watch: Copied '%s' to '%s' for tenant '%s'", srcPath, dstPath, tc.Name)
+				}
 				fi, _ := os.Stat(srcPath)
 				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
 			}
@@ -440,7 +440,7 @@ func syncTenantDirs(db *sql.DB, tc TenantConfig) error {
 			if srcExists && dstExists {
 				fi, _ := os.Stat(srcPath)
 				markProcessed(db, tc.Name, srcPath, fi.Size(), tc.DestDir)
-				   log.Printf("[Sync] In both: Registering file '%s' in database for tenant '%s'", srcPath, tc.Name)
+				log.Printf("[Sync] In both: Registering file '%s' in database for tenant '%s'", srcPath, tc.Name)
 			}
 		}
 	}
@@ -521,9 +521,9 @@ WantedBy=multi-user.target
 
 	// Sincroniza arquivos antes de iniciar watchers
 	for _, tenant := range cfg.Tenants {
-		   if err := syncTenantDirs(db, tenant); err != nil {
-			   log.Printf("[Sync] Error syncing tenant %s: %v", tenant.Name, err)
-		   }
+		if err := syncTenantDirs(db, tenant); err != nil {
+			log.Printf("[Sync] Error syncing tenant %s: %v", tenant.Name, err)
+		}
 	}
 
 	if *deleteProcessedFlag != "" {
